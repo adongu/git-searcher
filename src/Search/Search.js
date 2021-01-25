@@ -15,25 +15,25 @@ export default class Search extends Component {
     };
   }
 
+  onSuggestionsFetchRequested = debounce(({ value }) => {
+    if (value.length) {
+      fetch(`https://api.github.com/search/repositories?q=${value}&per_page=10`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            console.log({ error: data.error });
+          } else {
+            this.setState({ suggestions: data.items });
+          }
+        })
+        .catch((err) => {
+          console.log({ err });
+        });
+    }
+  }, 300);
+
   escapeRegexCharacters = (str) => {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  };
-
-  getSuggestions = (value) => {
-    const escapedValue = this.escapeRegexCharacters(value.trim());
-
-    if (escapedValue === '') {
-      return [];
-    }
-
-    const regex = new RegExp(`^${escapedValue}`, 'i');
-
-    // @TODO github name
-    return [].filter((repo) => regex.test(repo.name));
-  };
-
-  getSuggestionValue = (suggestion) => {
-    return suggestion.name;
   };
 
   renderSuggestion = (suggestion, { query }) => {
@@ -63,13 +63,21 @@ export default class Search extends Component {
     });
   };
 
-  onSuggestionsFetchRequested = ({ value }) => {
-    debounce(
-      fetch(`https://api.github.com/repos/${value}`)
-        .then((response) => response.json())
-        .then((data) => this.setState({ suggestions: data.results })),
-      300
-    );
+  getSuggestions = (value) => {
+    const escapedValue = this.escapeRegexCharacters(value.trim());
+
+    if (escapedValue === '') {
+      return [];
+    }
+
+    const regex = new RegExp(`^${escapedValue}`, 'i');
+
+    // @TODO github name
+    return [].filter((repo) => regex.test(repo.name));
+  };
+
+  getSuggestionValue = (suggestion) => {
+    return suggestion.name;
   };
 
   onSuggestionsClearRequested = () => {
@@ -81,7 +89,7 @@ export default class Search extends Component {
   render() {
     const { value, suggestions } = this.state;
     const inputProps = {
-      placeholder: "Type 'c'",
+      placeholder: 'Type A github repo name',
       value,
       onChange: this.onChange,
     };
@@ -89,7 +97,7 @@ export default class Search extends Component {
     return (
       <Autosuggest
         suggestions={suggestions}
-        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+        onSuggestionsFetchRequested={debounce(this.onSuggestionsFetchRequested)}
         onSuggestionsClearRequested={this.onSuggestionsClearRequested}
         getSuggestionValue={this.getSuggestionValue}
         renderSuggestion={this.renderSuggestion}
