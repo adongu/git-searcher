@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import './styles.css';
 import Autosuggest from 'react-autosuggest';
 import match from 'autosuggest-highlight/match';
@@ -21,24 +22,22 @@ export default class Search extends Component {
         .then((response) => response.json())
         .then((data) => {
           if (data.error) {
+            // @TODO notifications for error
             console.log({ error: data.error });
           } else {
             this.setState({ suggestions: data.items });
           }
         })
         .catch((err) => {
+          // @TODO notifications for error
           console.log({ err });
         });
     }
   }, 300);
 
-  escapeRegexCharacters = (str) => {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  };
-
   renderSuggestion = (suggestion, { query }) => {
-    const matches = match(suggestion.name, query);
-    const parts = parse(suggestion.name, matches);
+    const matches = match(suggestion.full_name, query);
+    const parts = parse(suggestion.full_name, matches);
 
     return (
       <span>
@@ -53,6 +52,9 @@ export default class Search extends Component {
             </span>
           );
         })}
+        <span> {suggestion.description}</span>
+        <span>🌟 {suggestion.stargazers_count} Stars</span>
+        <span> | Language: {suggestion.language}</span>
       </span>
     );
   };
@@ -63,21 +65,10 @@ export default class Search extends Component {
     });
   };
 
-  getSuggestions = (value) => {
-    const escapedValue = this.escapeRegexCharacters(value.trim());
-
-    if (escapedValue === '') {
-      return [];
-    }
-
-    const regex = new RegExp(`^${escapedValue}`, 'i');
-
-    // @TODO github name
-    return [].filter((repo) => regex.test(repo.name));
-  };
-
   getSuggestionValue = (suggestion) => {
-    return suggestion.name;
+    const { saveRepo } = this.props;
+    saveRepo(suggestion);
+    return '';
   };
 
   onSuggestionsClearRequested = () => {
@@ -89,7 +80,7 @@ export default class Search extends Component {
   render() {
     const { value, suggestions } = this.state;
     const inputProps = {
-      placeholder: 'Type A github repo name',
+      placeholder: 'Type A github repo name, click suggestion to save it',
       value,
       onChange: this.onChange,
     };
@@ -106,3 +97,7 @@ export default class Search extends Component {
     );
   }
 }
+
+Search.propTypes = {
+  saveRepo: PropTypes.func.isRequired,
+};
