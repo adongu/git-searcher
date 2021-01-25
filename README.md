@@ -37,7 +37,7 @@ $ docker build -t git-searcher .
 Run container
 
 ```
-docker run -it -p 3000 git-searcher
+$ docker run -it -p 3000 git-searcher
 ```
 
 ### Running the server
